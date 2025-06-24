@@ -7,11 +7,11 @@ import pandas as pd
 from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 from PIL import Image
+import tempfile
 
 # Load model and feature list
 model = joblib.load(os.path.join("models", "model.pkl"))
 features = joblib.load(os.path.join("models", "features.pkl"))
-
 
 # Function to extract ECG features
 def extract_ecg_features(image_path):
@@ -69,39 +69,42 @@ def predict_ecg(image_path):
     return "Abnormal" if prediction == 1 else "Normal", features_dict
 
 # --- Streamlit UI ---
-
-st.set_page_config(page_title="🫀 ECG Classifier", layout="centered")
-# Main UI
-st.markdown("<h1 style='text-align: center;'>🫀 ECG Image Classification</h1>", unsafe_allow_html=True)
+st.set_page_config(page_title="🪀 ECG Classifier", layout="centered")
+st.markdown("<h1 style='text-align: center;'>🪀 ECG Image Classification</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: gray;'>Upload an ECG image to classify it as Normal or Abnormal</h4>", unsafe_allow_html=True)
 st.markdown("---")
 
-uploaded_file = st.file_uploader("📤 Upload ECG Image", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
+uploaded_file = st.file_uploader("\ud83d\udcc4 Upload ECG Image", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
 if uploaded_file is not None:
     col1, col2 = st.columns([1, 2])
 
-    # Save temp file
-    temp_path = os.path.join("temp_ecg.png")
-    # Show image
-    with col1:
-        image = Image.open(temp_path)
-        st.image(image, caption="ECG Image", use_container_width=True)
+    # Save uploaded image to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp:
+        temp.write(uploaded_file.read())
+        temp_path = temp.name
 
-    # Make prediction
+    # Display image
+    with col1:
+        st.image(temp_path, caption="ECG Image", use_container_width=True)
+
+    # Prediction
     with col2:
-        with st.spinner("🔍 Analyzing ECG..."):
+        with st.spinner("\ud83d\udd0d Analyzing ECG..."):
             try:
                 prediction, feature_vals = predict_ecg(temp_path)
-                st.success(f"✅ Prediction: **{prediction}**", icon="💡")
+                st.success(f"\u2705 Prediction: **{prediction}**", icon="💡")
 
-                with st.expander("📊 Show Extracted Features"):
+                with st.expander("\ud83d\udcca Show Extracted Features"):
                     st.dataframe(pd.DataFrame([feature_vals]), use_container_width=True)
 
             except Exception as e:
-                st.error(f"❌ Error during prediction: {e}")
+                st.error(f"\u274c Error during prediction: {e}")
+
+        # Optional: cleanup
+        os.remove(temp_path)
 else:
-    st.info("📁 Please upload a valid ECG image to get started.")
+    st.info("\ud83d\udcc1 Please upload a valid ECG image to get started.")
 
 # Footer
 st.markdown("---")
